@@ -22,3 +22,18 @@ run main_CFS.m to see the result below
 ![](https://github.com/changliuliu/CFS/blob/master/CFS_Matlab_Arm/outcome.jpg)
 
 It takes a while to finish the 3D plot ...
+
+## CFS_Knitro_2D
+This folder contains the implementation in C++ on top of Knitro
+
+install [Knitro](https://www.artelys.com/en/optimization-tools/knitro) first
+
+>> cd build
+>> cmake ..
+>> make
+
+The problem is defined in PlanningProblem.h. Some adjustable parameters are loadable from the folder "parameter".
+
+MyCFS solves the problem using CFS.
+
+MyNLNC solves the problem using built-in solvers in Knitro. 
