@@ -1,4 +1,3 @@
-load('figure/M16iB-figure.mat');
 DH=robot.DH;
 M={};
 M{1}=eye(4);
@@ -12,9 +11,7 @@ end
 
 for i=1:6
     v=link{i}.v; f=link{i}.f; c=link{i}.c; color=link{i}.color;
-    for j=1:size(v,1)
-        v(j,:)=v(j,:)*M{i+1}(1:3,1:3)'+M{i+1}(1:3,4)'.*1000+offset;
-    end
+    v = setVertice(v,M{i+1},scale,offset);
     gcf;
     %color = [0.6,0.6,1];
     h=patch('Faces',f,'Vertices',v,'FaceVertexCData',c,'FaceColor',color,'EdgeColor','None');
@@ -22,12 +19,10 @@ for i=1:6
     if i==1 || i==3
         for k=1:4
             v=link{i}.motor{k}.v; f=link{i}.motor{k}.f; c=link{i}.motor{k}.c; color=link{i}.motor{k}.color;
-            for j=1:size(v,1)
-                v(j,:)=v(j,:)*M{i+1}(1:3,1:3)'+M{i+1}(1:3,4)'.*1000+offset;
-            end
+            v = setVertice(v,M{i+1},scale,offset);
             h=patch('Faces',f,'Vertices',v,'FaceVertexCData',c,'FaceColor',color,'EdgeColor','None');
             alpha(h,valpha);
         end
     end
-    
 end
+

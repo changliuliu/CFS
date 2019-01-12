@@ -6,11 +6,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 currfold = pwd;
 addpath(strcat(currfold,'/Lib'));
-addpath(strcat(currfold,'/DERIVESTsuite'));
+addpath(genpath(strcat(currfold,'/DERIVESTsuite')));
 
 robot=robotproperty(3);
 njoint=5;nstate=10;nu=5;DH=robot.DH;
-base=[3250, 8500,0]./1000;
+base=[3250, 8500,0]'./1000;
 
 load('data/M16_ref_2.mat')
 
@@ -54,9 +54,11 @@ for i=1:horizon
         0 0 0 0 1];
 end
 R=R+R';
-%% CFS Iteration
-MAX_ITER = 5;
 
+f = @(x) dist_arm_3D_Heu(x,DH(1:njoint,:),base,obs,robot.cap);
+%% CFS Iteration
+MAX_ITER = 10;
+time_record =[];
 D=0.09;
 for k=1:MAX_ITER
     tic
@@ -68,12 +70,13 @@ for k=1:MAX_ITER
             [distance,linkid]=dist_arm_3D_Heu(theta,DH(1:njoint,:),base,obs,robot.cap);
             %distance=dist_arm_3D(theta,DH(1:njoint,:),base,obs,robot.cap);
             I = [I;distance-D];
-            Diff=zeros(njoint,1);
-            for s=1:njoint
-                [Diff(s),~]=derivest(@(x) dist_link_Heu([theta(1:s-1);x;theta(s+1:end)],DH(1:njoint,:),base,obs,robot.cap,linkid),theta(s),'Vectorized','no');
-                %[Diff(s),~]=derivest(@(x) dist_arm_3D([theta(1:s-1);x;theta(s+1:end)],DH(1:njoint,:),base,obs,robot.cap),theta(s),'Vectorized','no');
-            end
-            Diff;
+%             Diff=zeros(njoint,1);
+%             for s=1:njoint                
+%                 [Diff(s),~]=derivest(@(x) dist_link_Heu([theta(1:s-1);x;theta(s+1:end)],DH(1:njoint,:),base,obs,robot.cap,linkid),theta(s),'Vectorized','no','FixedStep',1e-5);
+%                 %[Diff(s),~]=derivest(@(x) dist_arm_3D([theta(1:s-1);x;theta(s+1:end)],DH(1:njoint,:),base,obs,robot.cap),theta(s),'Vectorized','no');
+%             end
+%             Diff;
+            Diff = num_jac(f,theta); Diff = Diff';
             %Hess=hessian(@(x) dist_link_Heu(x,DH(1:njoint,:),base,obs,robot.cap,linkid),theta);
             Bj=Baug((i-1)*nstate+1:i*nstate,1:horizon*nu);
             s=I(i)-Diff'*Bj(1:njoint,:)*uref;
@@ -97,7 +100,7 @@ for k=1:MAX_ITER
     tic;
     unew = quadprog(Baug'*Qaug*Baug+R.*10,((Aaug*xR(:,1)-xori)'*Qaug*Baug)',Lstack,Sstack);
     time=toc
-    
+    time_record = [time_record; pretime, time];
     % fun= @(u) u'* (Baug'*Qaug*Baug+R)* u+ 2*((Aaug*xR(:,1)-xori)'*Qaug*Baug)*u;%+(Aaug*xR(:,1)-xref)'*Qaug*(Aaug*xR(:,1)-xref);
     % nonlcon=@(u) nldisfn(u,robot.A([1:njoint,7:6+njoint],[1:njoint,7:6+njoint]),robot.B([1:njoint,7:6+njoint],1:nu),xori(1:nstate),robot.DH,horizon,base,obs,robot.cap);
     % options = optimoptions(@fmincon,'Display','iter','Algorithm','sqp','TolCon',1,'MaxFunEvals',30000);
@@ -122,18 +125,19 @@ for k=1:MAX_ITER
         break;
     end
 end
-%% Visualization (This may take a while ...)
-DrawMap;
+%% Visualization
+DrawMap; view([105,34]);
 for i=1:1:horizon
     robot.DH(1:njoint,1)=xref((i-1)*nstate+1:(i-1)*nstate+njoint);
-        
+    
     % Use the following lines to draw capsules
-%     color=[i/horizon,i/horizon,i/horizon];
-%     valpha=0.2;
-%     RobotCapLink;
+    %     color=[i/horizon,i/horizon,i/horizon];
+    %     valpha=0.2;
+    %     RobotCapLink;
     
     % Use the following lines to draw robot arm
-    valpha=1;%i/horizon;
+    valpha=i/horizon;
     RobotFigureLink;
-
+    % Use the following line to enable animation plot
+    pause(0.2);
 end

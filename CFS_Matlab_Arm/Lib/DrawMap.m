@@ -5,11 +5,11 @@ patch('Faces',envir.f,'Vertices',envir.v,'FaceVertexCData',envir.c,'FaceColor',e
 %%
 load('figure/M16iB-figure.mat');
 robot=robotproperty(3);
-offset=[3250, 8500,0];
-
+offset=[3250, 8500,0]./1000;
+scale = 1000;
 %% Base
 for i=1:2
-    f=base{i}.f; v=base{i}.v+ones(size(base{i}.v,1),1)*offset; c=base{i}.c; color=base{i}.color;
+    f=base{i}.f; v=base{i}.v+ones(size(base{i}.v,1),1)*offset*scale; c=base{i}.c; color=base{i}.color;
     %color = [0.6,0.6,1];
     patch('Faces',f,'Vertices',v,'FaceVertexCData',c,'FaceColor',color,'EdgeColor','None');
 end
@@ -28,24 +28,20 @@ end
 
 for i=1:6
     v=link{i}.v; f=link{i}.f; c=link{i}.c; color=link{i}.color;
-    for j=1:size(v,1)
-        v(j,:)=v(j,:)*M{i+1}(1:3,1:3)'+M{i+1}(1:3,4)'.*1000+offset;
-    end
+    v = setVertice(v,M{i+1},scale,offset);
     %color = [0.6,0.6,1];
     patch('Faces',f,'Vertices',v,'FaceVertexCData',c,'FaceColor',color,'EdgeColor','None');
     if i==1 || i==3
         for k=1:4
             v=link{i}.motor{k}.v; f=link{i}.motor{k}.f; c=link{i}.motor{k}.c; color=link{i}.motor{k}.color;
-            for j=1:size(v,1)
-                v(j,:)=v(j,:)*M{i+1}(1:3,1:3)'+M{i+1}(1:3,4)'.*1000+offset;
-            end
+            v = setVertice(v,M{i+1},scale,offset);
             patch('Faces',f,'Vertices',v,'FaceVertexCData',c,'FaceColor',color,'EdgeColor','None');
         end
     end
     
 end
 
-% %% Payload
+%% Payload
 % i=6;
 % v=payload.v;f=payload.f;c=payload.c;color=payload.color;
 % for j=1:size(v,1)
@@ -64,7 +60,7 @@ R=[0 -1 0;1 0 0; 0 0 1]*[cos(theta) sin(theta) 0;-sin(theta) cos(theta) 0; 0 0 1
 for j=1:size(v,1)
     v(j,:)=v(j,:)*R';
 end
-workeroffset=offset+[1000, 0 ,0];
+workeroffset=offset*scale+[1000, 0 ,0];
 T=[-600-(i-1)*10, 1000-(i-1)*20, -min(v(:,3))]+workeroffset;
 for j=1:size(v,1)
     v(j,:)=v(j,:)+T;
@@ -73,7 +69,8 @@ Worker.hanle=patch('Faces',f,'Vertices',v,'FaceVertexCData',c,'FaceColor',[0,i/h
 end
 %%
 axis equal
-axis([1000 8000,5500 15000,0,2500])
+% axis([1000 8000,5500 15000,0,2500]) % whole view (smaller)
+axis([2500 6000,7000 11000,0,2500]) % local view (larger)
 view([1,0.4,1])
 lighting flat
 light=camlight('right');
