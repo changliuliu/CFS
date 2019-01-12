@@ -28,9 +28,11 @@ This folder contains the implementation in C++ on top of Knitro
 
 install [Knitro](https://www.artelys.com/en/optimization-tools/knitro) first
 
->> cd build
->> cmake ..
->> make
+> cd build
+>
+> cmake ..
+>
+> make
 
 The problem is defined in PlanningProblem.h. Some adjustable parameters are loadable from the folder "parameter".
 
